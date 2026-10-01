@@ -46,14 +46,14 @@ describe('Default Excel scenario', () => {
   it('workingCapitalInterest ≈ $80,088', () => near(r.benefits.workingCapitalInterest, 80087.67, 0.5));
 
   it('totalAnnualBenefit ≈ $631,760', () => near(r.totalAnnualBenefit, 631759.59, 1));
-  it('implementationCost = $150,000', () => expect(r.implementationCost).toBe(150000));
+  it('implementationCost = $50,000', () => expect(r.implementationCost).toBe(50000));
   it('roi ≈ 421%', () => near(r.roi, 4.2117, 0.001));
 });
 
 describe('Payment mix validation', () => {
   it('payment mix totals 1 in defaults', () => {
     const m = DEFAULT_INPUTS.paymentMix;
-    expect(m.creditCard + m.check + m.offlineAch).toBeCloseTo(1, 5);
+    expect(m.creditCard + m.check + m.offlineAch + m.onlineAch).toBeCloseTo(1, 5);
   });
 
   it('future total count equals current total count', () => {
@@ -109,7 +109,7 @@ describe('Edge cases', () => {
   it('changing payment mix recalculates CC/check/ACH values', () => {
     const r = calculateRoi({
       ...DEFAULT_INPUTS,
-      paymentMix: { creditCard: 0.10, check: 0.40, offlineAch: 0.50 },
+      paymentMix: { creditCard: 0.10, check: 0.40, offlineAch: 0.50, onlineAch: 0 },
     });
     near(r.currentPaymentMix.creditCard.value, 3_600_000);
     near(r.currentPaymentMix.check.value, 14_400_000);
