@@ -9,6 +9,11 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Stack from '@mui/material/Stack';
 import Collapse from '@mui/material/Collapse';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Divider from '@mui/material/Divider';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -17,6 +22,11 @@ import PresentToAllIcon from '@mui/icons-material/PresentToAll';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { RoiProvider, useRoi } from '@/lib/roi/context';
 import InputPanel from './InputPanel/InputPanel';
 import ProfileSummary from './Dashboard/ProfileSummary';
@@ -58,13 +68,16 @@ function SectionLabel({ children, collapsed, onToggle }: { children: string; col
   );
 }
 
-function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll }: {
+function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hiddenSections, onToggleVisibility }: {
   activeSection: string;
   onNavigate: (id: string) => void;
   hasCollapsed: boolean;
   onExpandAll: () => void;
+  hiddenSections: Set<string>;
+  onToggleVisibility: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const visibleSections = SECTIONS.filter(s => !hiddenSections.has(s.id));
 
   return (
     <Box
@@ -72,7 +85,7 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll }: 
       onMouseLeave={() => setOpen(false)}
       sx={{
         flexShrink: 0,
-        width: open ? 156 : 20,
+        width: open ? 172 : 20,
         transition: 'width 0.22s ease',
         overflow: 'hidden',
         position: 'relative',
@@ -81,7 +94,7 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll }: 
         justifyContent: 'flex-end',
       }}
     >
-      {/* Collapsed: dots only */}
+      {/* Collapsed: dots for visible sections only */}
       <Box sx={{
         position: 'absolute',
         right: 4,
@@ -95,7 +108,7 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll }: 
         transition: 'opacity 0.15s',
         pointerEvents: 'none',
       }}>
-        {SECTIONS.map(({ id }) => {
+        {visibleSections.map(({ id }) => {
           const active = activeSection === id;
           return (
             <Box key={id} sx={{
@@ -116,7 +129,7 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll }: 
         right: 8,
         top: '50%',
         transform: 'translateY(-50%)',
-        width: 140,
+        width: 156,
         bgcolor: 'background.paper',
         borderRadius: 2.5,
         boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
@@ -130,57 +143,77 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll }: 
       }}>
         {SECTIONS.map(({ id, label }) => {
           const active = activeSection === id;
+          const hidden = hiddenSections.has(id);
           return (
             <Box
               key={id}
-              onClick={() => onNavigate(id)}
               sx={{
-                display: 'flex', alignItems: 'center', gap: 1,
-                py: 0.6, px: 0.75, mb: 0.15,
-                borderRadius: 1.5,
-                cursor: 'pointer',
-                userSelect: 'none',
-                bgcolor: active ? 'primary.50' : 'transparent',
-                '&:hover': { bgcolor: active ? 'primary.100' : 'action.hover' },
-                transition: 'background-color 0.12s',
+                display: 'flex', alignItems: 'center',
+                py: 0.25, mb: 0.15, borderRadius: 1.5,
+                '&:hover .vis-btn': { opacity: 1 },
               }}
             >
-              <Box sx={{
-                width: active ? 8 : 6,
-                height: active ? 8 : 6,
-                borderRadius: '50%',
-                flexShrink: 0,
-                bgcolor: active ? 'primary.main' : 'grey.300',
-                transition: 'all 0.15s',
-              }} />
-              <Typography sx={{
-                fontSize: '0.75rem',
-                fontWeight: active ? 700 : 400,
-                color: active ? 'primary.main' : 'text.secondary',
-                lineHeight: 1.3,
-                whiteSpace: 'nowrap',
-              }}>
-                {label}
-              </Typography>
+              {/* Label area — navigates or unhides */}
+              <Box
+                onClick={() => hidden ? onToggleVisibility(id) : onNavigate(id)}
+                sx={{
+                  display: 'flex', alignItems: 'center', gap: 1, flex: 1,
+                  py: 0.35, px: 0.75, borderRadius: 1.5,
+                  cursor: 'pointer', userSelect: 'none',
+                  opacity: hidden ? 0.38 : 1,
+                  bgcolor: active && !hidden ? 'primary.50' : 'transparent',
+                  '&:hover': { bgcolor: active && !hidden ? 'primary.100' : 'action.hover' },
+                  transition: 'background-color 0.12s, opacity 0.15s',
+                }}
+              >
+                <Box sx={{
+                  width: active && !hidden ? 8 : 6,
+                  height: active && !hidden ? 8 : 6,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  bgcolor: active && !hidden ? 'primary.main' : 'grey.300',
+                  transition: 'all 0.15s',
+                }} />
+                <Typography sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: active && !hidden ? 700 : 400,
+                  color: active && !hidden ? 'primary.main' : 'text.secondary',
+                  lineHeight: 1.3,
+                  whiteSpace: 'nowrap',
+                  flex: 1,
+                }}>
+                  {label}
+                </Typography>
+              </Box>
+
+              {/* Visibility toggle */}
+              <IconButton
+                className="vis-btn"
+                size="small"
+                onClick={e => { e.stopPropagation(); onToggleVisibility(id); }}
+                sx={{
+                  p: 0.3, mr: 0.25, flexShrink: 0,
+                  opacity: hidden ? 1 : 0,
+                  color: hidden ? 'text.disabled' : 'text.disabled',
+                  transition: 'opacity 0.15s',
+                  '&:hover': { color: hidden ? 'primary.main' : 'text.secondary' },
+                }}
+              >
+                {hidden
+                  ? <VisibilityOffIcon sx={{ fontSize: 14 }} />
+                  : <VisibilityIcon sx={{ fontSize: 14 }} />
+                }
+              </IconButton>
             </Box>
           );
         })}
+
         {hasCollapsed && (
           <Box
             onClick={onExpandAll}
-            sx={{
-              mt: 0.75, pt: 0.75,
-              borderTop: '1px solid', borderColor: 'divider',
-              textAlign: 'center',
-              cursor: 'pointer',
-              borderRadius: 1,
-              py: 0.5,
-              '&:hover': { bgcolor: 'action.hover' },
-            }}
+            sx={{ mt: 0.75, pt: 0.75, borderTop: '1px solid', borderColor: 'divider', textAlign: 'center', cursor: 'pointer', borderRadius: 1, py: 0.5, '&:hover': { bgcolor: 'action.hover' } }}
           >
-            <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', fontWeight: 600 }}>
-              Expand all
-            </Typography>
+            <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', fontWeight: 600 }}>Expand all</Typography>
           </Box>
         )}
       </Box>
@@ -188,11 +221,20 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll }: 
   );
 }
 
+const ALL_SECTION_DEFS = [
+  { id: 'section-overview', label: 'ROI Overview',       card: <RoiHero />,              pt: 0 },
+  { id: 'section-profile',  label: 'Business Profile',   card: <ProfileSummary />,       pt: 1 },
+  { id: 'section-mix',      label: 'Payment Mix',        card: <PaymentMixChart />,      pt: 1 },
+  { id: 'section-impact',   label: 'Financial Impact',   card: <FinancialImpactChart />, pt: 1 },
+  { id: 'section-invest',   label: 'Investment Summary', card: <InvestmentSummary />,    pt: 1 },
+];
+
 function Dashboard() {
   const { state: { presentationMode } } = useRoi();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [hiddenSections, setHiddenSections] = useState<Set<string>>(new Set());
   const [focused, setFocused] = useState<string | null>(null);
   const focusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -203,38 +245,75 @@ function Dashboard() {
   });
   const isCollapsed = (id: string) => collapsed.has(id);
 
+  const toggleVisibility = (id: string) => {
+    setHiddenSections(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const visibleSectionIds = SECTIONS.map(s => s.id).filter(id => !hiddenSections.has(id));
+
+  // Tracks the intended current section immediately (not scroll-spy lag).
+  // Using a ref avoids stale closure issues in the keyboard handler.
+  const navTargetRef = useRef(SECTIONS[0].id);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
-      let current = SECTIONS[0].id;
-      for (const { id } of SECTIONS) {
+      let current = visibleSectionIds[0] ?? SECTIONS[0].id;
+      for (const id of visibleSectionIds) {
         const section = document.getElementById(id);
         if (section && section.offsetTop - 72 <= el.scrollTop) current = id;
       }
       setActiveSection(current);
+      navTargetRef.current = current; // keep in sync when user scrolls manually
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [visibleSectionIds.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scrollTo = (id: string) => {
-    // Collapse all others, expand target
-    setCollapsed(new Set(SECTIONS.map(s => s.id).filter(s => s !== id)));
+    navTargetRef.current = id; // update immediately so rapid keypresses use the correct position
+    setHiddenSections(prev => { const next = new Set(prev); next.delete(id); return next; });
+    setCollapsed(new Set(visibleSectionIds.filter(s => s !== id)));
 
-    // After collapse animation, center the section and flash highlight
     setTimeout(() => {
       const el = scrollRef.current;
       const section = document.getElementById(id);
       if (!el || !section) return;
       const top = section.offsetTop - (el.clientHeight / 2) + (section.offsetHeight / 2);
       el.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-
       setFocused(id);
       if (focusTimer.current) clearTimeout(focusTimer.current);
       focusTimer.current = setTimeout(() => setFocused(null), 1800);
     }, 280);
   };
+
+  const visibleSectionIdsRef = useRef(visibleSectionIds);
+  visibleSectionIdsRef.current = visibleSectionIds;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+
+      const ids = visibleSectionIdsRef.current;
+      const idx = ids.indexOf(navTargetRef.current);
+
+      if (e.key === 'ArrowRight') {
+        const nextIdx = idx === -1 ? 0 : idx + 1;
+        if (nextIdx < ids.length) scrollTo(ids[nextIdx]);
+      } else {
+        if (idx > 0) scrollTo(ids[idx - 1]);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const p = { xs: 2, md: presentationMode ? 4 : 3 };
 
@@ -244,27 +323,23 @@ function Dashboard() {
         <Box sx={{ p }}>
           <Stack spacing={0}>
 
-            {[
-              { id: 'section-overview', label: 'ROI Overview',        card: <RoiHero />,             pt: 0 },
-              { id: 'section-profile',  label: 'Business Profile',   card: <ProfileSummary />,      pt: presentationMode ? 4 : 3 },
-              { id: 'section-mix',      label: 'Payment Mix',         card: <PaymentMixChart />,     pt: presentationMode ? 4 : 3 },
-              { id: 'section-impact',   label: 'Financial Impact',    card: <FinancialImpactChart />,pt: presentationMode ? 4 : 3 },
-              { id: 'section-invest',   label: 'Investment Summary',  card: <InvestmentSummary />,   pt: presentationMode ? 4 : 3 },
-            ].map(({ id, label, card, pt }, i) => (
-              <Box key={id} id={id} sx={{ pt: i === 0 ? 0 : pt, pb: i === 4 ? 4 : 0 }}>
-                <SectionLabel collapsed={isCollapsed(id)} onToggle={() => toggle(id)}>{label}</SectionLabel>
-                <Collapse in={!isCollapsed(id)}>
-                  <Box sx={{
-                    borderRadius: 2,
-                    outline: focused === id ? '2px solid' : '2px solid transparent',
-                    outlineColor: focused === id ? 'primary.main' : 'transparent',
-                    transition: 'outline-color 0.3s ease',
-                  }}>
-                    {card}
-                  </Box>
-                </Collapse>
-              </Box>
-            ))}
+            {ALL_SECTION_DEFS
+              .filter(({ id }) => !hiddenSections.has(id))
+              .map(({ id, label, card, pt }, i, arr) => (
+                <Box key={id} id={id} sx={{ pt: i === 0 ? 0 : (presentationMode ? 4 : pt * 3), pb: i === arr.length - 1 ? 4 : 0 }}>
+                  <SectionLabel collapsed={isCollapsed(id)} onToggle={() => toggle(id)}>{label}</SectionLabel>
+                  <Collapse in={!isCollapsed(id)}>
+                    <Box sx={{
+                      borderRadius: 2,
+                      outline: focused === id ? '2px solid' : '2px solid transparent',
+                      outlineColor: focused === id ? 'primary.main' : 'transparent',
+                      transition: 'outline-color 0.3s ease',
+                    }}>
+                      {card}
+                    </Box>
+                  </Collapse>
+                </Box>
+              ))}
 
           </Stack>
         </Box>
@@ -274,65 +349,144 @@ function Dashboard() {
         onNavigate={scrollTo}
         hasCollapsed={collapsed.size > 0}
         onExpandAll={() => setCollapsed(new Set())}
+        hiddenSections={hiddenSections}
+        onToggleVisibility={toggleVisibility}
       />
     </Box>
   );
 }
 
+const HELP_SECTIONS = [
+  {
+    heading: 'Getting Started',
+    items: [
+      'Enter your customer\'s details in the left input panel — revenue, invoice volume, AR staffing, DSO, and payment mix.',
+      'The dashboard updates live as you type. No save button needed.',
+      'Use Reset (↺) at any time to return all inputs to default values.',
+    ],
+  },
+  {
+    heading: 'Input Panel',
+    items: [
+      'Business Profile — Core company metrics: annual revenue, invoice/payment volumes, AR headcount, and Days Sales Outstanding.',
+      'Payment Mix — How the customer currently splits payments across Credit Card, Check, Offline ACH, and Online ACH. Adjust via slider or type a % directly.',
+      'Versapay Impact — Conversion assumptions: what % of checks and ACH go online, portal adoption rates, and efficiency gains.',
+      'Financial Assumptions — Cost of capital, surcharge rate, write-off recovery, software/implementation costs, and other line items.',
+    ],
+  },
+  {
+    heading: 'Dashboard Sections',
+    items: [
+      'ROI Overview — Headline metrics: Annual Benefit, Year 1 ROI, Working Capital Unlocked, and DSO Reduction.',
+      'Business Profile — A read-only summary of inputs and key assumptions at a glance.',
+      'Payment Mix — Current vs. Future payment breakdown as donut charts, plus Payment Transformation stats (% moved online, manual events eliminated, self-service rate).',
+      'Annual Financial Impact — Individual benefit categories as a bar chart. Use the dropdown to exclude any benefits that don\'t apply. Click ⓘ on any row for a plain-English explanation and formula.',
+      'Investment Summary — Full cost breakdown (software + implementation) with payback period and net Year 1 benefit alongside the ROI figure.',
+    ],
+  },
+  {
+    heading: 'Presentation Mode',
+    items: [
+      'Click Presentation in the top-right to hide the input panel and show a clean, full-width dashboard.',
+      'Use "Pop out inputs" to open the input panel in a separate window — ideal for a second monitor. Changes sync to the presentation in real time.',
+      'Click any section label to collapse it; use the floating nav on the right to jump between sections or expand all.',
+      'Clicking a section in the nav collapses the others and centers that section with a highlight.',
+    ],
+  },
+];
+
 function Header() {
   const { state: { inputPanelOpen, presentationMode }, dispatch, reset, sessionId } = useRoi();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
+  const [helpOpen, setHelpOpen] = useState(false);
 
   return (
-    <AppBar position="static" elevation={0} sx={{ bgcolor: 'white', borderBottom: '1px solid', borderColor: 'divider', color: 'text.primary' }}>
-      <Toolbar sx={{ gap: 1 }}>
-        {!presentationMode && (
-          <Tooltip title={inputPanelOpen ? 'Hide inputs' : 'Show inputs'}>
-            <IconButton onClick={() => dispatch({ type: 'TOGGLE_PANEL' })} edge="start" size="small">
-              <MenuIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
-          <Box sx={{ width: 8, height: 28, bgcolor: 'primary.main', borderRadius: 1, flexShrink: 0 }} />
-          <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: -0.5, fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
-            VERSAPAY ROI CALCULATOR
-          </Typography>
-        </Box>
-        {!presentationMode && (
-          <Tooltip title="Reset to defaults">
-            <Button size="small" startIcon={<RefreshIcon />} onClick={reset} color="inherit" sx={{ fontSize: '0.75rem', display: { xs: 'none', sm: 'flex' } }}>
-              Reset
-            </Button>
-          </Tooltip>
-        )}
-        {presentationMode && (
-          <Tooltip title="Open inputs on a second screen">
+    <>
+      <AppBar position="static" elevation={0} sx={{ bgcolor: 'white', borderBottom: '1px solid', borderColor: 'divider', color: 'text.primary' }}>
+        <Toolbar sx={{ gap: 1 }}>
+          {!presentationMode && (
+            <Tooltip title={inputPanelOpen ? 'Hide inputs' : 'Show inputs'}>
+              <IconButton onClick={() => dispatch({ type: 'TOGGLE_PANEL' })} edge="start" size="small">
+                <MenuIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+            <Box sx={{ width: 8, height: 28, bgcolor: 'primary.main', borderRadius: 1, flexShrink: 0 }} />
+            <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: -0.5, fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
+              VERSAPAY ROI CALCULATOR
+            </Typography>
+            <Tooltip title="How to use this tool">
+              <IconButton size="small" onClick={() => setHelpOpen(true)} sx={{ color: 'text.disabled', '&:hover': { color: 'text.secondary' } }}>
+                <InfoOutlinedIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          {!presentationMode && (
+            <Tooltip title="Reset to defaults">
+              <Button size="small" startIcon={<RefreshIcon />} onClick={reset} color="inherit" sx={{ fontSize: '0.75rem', display: { xs: 'none', sm: 'flex' } }}>
+                Reset
+              </Button>
+            </Tooltip>
+          )}
+          {presentationMode && (
+            <Tooltip title="Open inputs on a second screen">
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<OpenInNewIcon />}
+                onClick={() => window.open(`/inputs?session=${sessionId}`, 'roi-inputs', 'width=420,height=760,resizable=yes')}
+                sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+              >
+                Pop out inputs
+              </Button>
+            </Tooltip>
+          )}
+          <Tooltip title={presentationMode ? 'Exit Presentation' : 'Presentation Mode'}>
             <Button
               size="small"
-              variant="outlined"
-              startIcon={<OpenInNewIcon />}
-              onClick={() => window.open(`/inputs?session=${sessionId}`, 'roi-inputs', 'width=420,height=760,resizable=yes')}
+              variant={presentationMode ? 'outlined' : 'contained'}
+              startIcon={presentationMode ? <FullscreenExitIcon /> : <PresentToAllIcon />}
+              onClick={() => dispatch({ type: 'TOGGLE_PRESENTATION' })}
               sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}
             >
-              Pop out inputs
+              {presentationMode ? 'Exit' : (isMobile ? 'Present' : 'Presentation')}
             </Button>
           </Tooltip>
-        )}
-        <Tooltip title={presentationMode ? 'Exit Presentation' : 'Presentation Mode'}>
-          <Button
-            size="small"
-            variant={presentationMode ? 'outlined' : 'contained'}
-            startIcon={presentationMode ? <FullscreenExitIcon /> : <PresentToAllIcon />}
-            onClick={() => dispatch({ type: 'TOGGLE_PRESENTATION' })}
-            sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}
-          >
-            {presentationMode ? 'Exit' : (isMobile ? 'Present' : 'Presentation')}
-          </Button>
-        </Tooltip>
-      </Toolbar>
-    </AppBar>
+        </Toolbar>
+      </AppBar>
+
+      <Dialog open={helpOpen} onClose={() => setHelpOpen(false)} maxWidth="sm" fullWidth scroll="paper"
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
+        <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', pb: 1 }}>
+          How to Use the ROI Calculator
+        </DialogTitle>
+        <DialogContent dividers sx={{ px: 3, py: 2 }}>
+          <Stack spacing={2.5}>
+            {HELP_SECTIONS.map((section, i) => (
+              <Box key={i}>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: 0.8, color: 'primary.main', mb: 1 }}>
+                  {section.heading}
+                </Typography>
+                <Stack spacing={0.75}>
+                  {section.items.map((item, j) => (
+                    <Box key={j} sx={{ display: 'flex', gap: 1.25, alignItems: 'flex-start' }}>
+                      <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: 'primary.main', flexShrink: 0, mt: '6px' }} />
+                      <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', lineHeight: 1.6 }}>{item}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+                {i < HELP_SECTIONS.length - 1 && <Divider sx={{ mt: 2.5 }} />}
+              </Box>
+            ))}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 1.5 }}>
+          <Button onClick={() => setHelpOpen(false)} variant="contained" size="small">Got it</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 
