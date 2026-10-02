@@ -70,16 +70,18 @@ function SectionLabel({ children, collapsed, onToggle }: { children: string; col
   );
 }
 
-function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hiddenSections, onToggleVisibility }: {
+function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hiddenSections, onToggleVisibility, sections, onMove }: {
   activeSection: string;
   onNavigate: (id: string) => void;
   hasCollapsed: boolean;
   onExpandAll: () => void;
   hiddenSections: Set<string>;
   onToggleVisibility: (id: string) => void;
+  sections: Array<{ id: string; label: string }>;
+  onMove: (id: string, dir: 'up' | 'down') => void;
 }) {
   const [open, setOpen] = useState(false);
-  const visibleSections = SECTIONS.filter(s => !hiddenSections.has(s.id));
+  const visibleSections = sections.filter(s => !hiddenSections.has(s.id));
 
   return (
     <Box
@@ -88,7 +90,7 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hi
       onMouseLeave={() => setOpen(false)}
       sx={{
         flexShrink: 0,
-        width: open ? 172 : 20,
+        width: open ? 200 : 20,
         transition: 'width 0.22s ease',
         overflow: 'hidden',
         position: 'relative',
@@ -132,7 +134,7 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hi
         right: 8,
         top: '50%',
         transform: 'translateY(-50%)',
-        width: 156,
+        width: 184,
         bgcolor: 'background.paper',
         borderRadius: 2.5,
         boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
@@ -144,7 +146,7 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hi
         transition: 'opacity 0.18s',
         pointerEvents: open ? 'auto' : 'none',
       }}>
-        {SECTIONS.map(({ id, label }) => {
+        {sections.map(({ id, label }, idx) => {
           const active = activeSection === id;
           const hidden = hiddenSections.has(id);
           return (
@@ -154,6 +156,7 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hi
                 display: 'flex', alignItems: 'center',
                 py: 0.25, mb: 0.15, borderRadius: 1.5,
                 '&:hover .vis-btn': { opacity: 1 },
+                '&:hover .move-btn:not(.Mui-disabled)': { opacity: 1 },
               }}
             >
               {/* Label area — navigates or unhides */}
@@ -188,6 +191,40 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hi
                   {label}
                 </Typography>
               </Box>
+
+              {/* Move up */}
+              <IconButton
+                className="move-btn"
+                size="small"
+                disabled={idx === 0}
+                onClick={e => { e.stopPropagation(); onMove(id, 'up'); }}
+                sx={{
+                  p: 0.3, flexShrink: 0,
+                  opacity: 0,
+                  transition: 'opacity 0.15s',
+                  '&.Mui-disabled': { opacity: 0 },
+                  '&:not(.Mui-disabled):hover': { color: 'primary.main' },
+                }}
+              >
+                <ArrowUpwardIcon sx={{ fontSize: 11 }} />
+              </IconButton>
+
+              {/* Move down */}
+              <IconButton
+                className="move-btn"
+                size="small"
+                disabled={idx === sections.length - 1}
+                onClick={e => { e.stopPropagation(); onMove(id, 'down'); }}
+                sx={{
+                  p: 0.3, flexShrink: 0,
+                  opacity: 0,
+                  transition: 'opacity 0.15s',
+                  '&.Mui-disabled': { opacity: 0 },
+                  '&:not(.Mui-disabled):hover': { color: 'primary.main' },
+                }}
+              >
+                <ArrowDownwardIcon sx={{ fontSize: 11 }} />
+              </IconButton>
 
               {/* Visibility toggle */}
               <IconButton
@@ -256,7 +293,20 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
     });
   };
 
-  const visibleSectionIds = SECTIONS.map(s => s.id).filter(id => !hiddenSections.has(id));
+  const [sectionOrder, setSectionOrder] = useState<string[]>(() => SECTIONS.map(s => s.id));
+
+  const moveSection = (id: string, dir: 'up' | 'down') => {
+    setSectionOrder(prev => {
+      const idx = prev.indexOf(id);
+      if (idx === -1) return prev;
+      const next = [...prev];
+      if (dir === 'up' && idx > 0) [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+      else if (dir === 'down' && idx < next.length - 1) [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+      return next;
+    });
+  };
+
+  const visibleSectionIds = sectionOrder.filter(id => !hiddenSections.has(id));
 
   // navTargetRef tracks the intended current section for keyboard nav.
   // suppressNavRef prevents the scroll spy from overwriting it after
@@ -418,23 +468,26 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
 
           <Stack spacing={0}>
 
-            {ALL_SECTION_DEFS
-              .filter(({ id }) => !hiddenSections.has(id))
-              .map(({ id, label, card, pt }, i, arr) => (
-                <Box key={id} id={id} data-print-section="true" sx={{ pt: i === 0 ? 0 : (presentationMode ? 4 : pt * 3), pb: i === arr.length - 1 ? 4 : 0 }}>
-                  <SectionLabel collapsed={isCollapsed(id)} onToggle={() => toggle(id)}>{label}</SectionLabel>
-                  <Collapse in={!isCollapsed(id)}>
-                    <Box sx={{
-                      borderRadius: 2,
-                      outline: focused === id ? '2px solid' : '2px solid transparent',
-                      outlineColor: focused === id ? 'primary.main' : 'transparent',
-                      transition: 'outline-color 0.3s ease',
-                    }}>
-                      {card}
-                    </Box>
-                  </Collapse>
-                </Box>
-              ))}
+            {sectionOrder
+              .filter(id => !hiddenSections.has(id))
+              .map((id, i, arr) => {
+                const { label, card, pt } = ALL_SECTION_DEFS.find(d => d.id === id)!;
+                return (
+                  <Box key={id} id={id} data-print-section="true" sx={{ pt: i === 0 ? 0 : (presentationMode ? 4 : pt * 3), pb: i === arr.length - 1 ? 4 : 0 }}>
+                    <SectionLabel collapsed={isCollapsed(id)} onToggle={() => toggle(id)}>{label}</SectionLabel>
+                    <Collapse in={!isCollapsed(id)}>
+                      <Box sx={{
+                        borderRadius: 2,
+                        outline: focused === id ? '2px solid' : '2px solid transparent',
+                        outlineColor: focused === id ? 'primary.main' : 'transparent',
+                        transition: 'outline-color 0.3s ease',
+                      }}>
+                        {card}
+                      </Box>
+                    </Collapse>
+                  </Box>
+                );
+              })}
 
           </Stack>
         </Box>
@@ -446,6 +499,8 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
         onExpandAll={() => setCollapsed(new Set())}
         hiddenSections={hiddenSections}
         onToggleVisibility={toggleVisibility}
+        sections={sectionOrder.map(id => SECTIONS.find(s => s.id === id)!)}
+        onMove={moveSection}
       />
     </Box>
   );
@@ -455,27 +510,28 @@ const HELP_SECTIONS = [
   {
     heading: 'Getting Started',
     items: [
-      'Enter your customer\'s details in the left input panel — revenue, invoice volume, AR staffing, DSO, and payment mix.',
-      'The dashboard updates live as you type. No save button needed.',
-      'Use Reset (↺) at any time to return all inputs to default values.',
+      'Enter the customer\'s business name and details in the left input panel. The dashboard and browser tab title update live as you type.',
+      'Use the download (↓) button in the panel header to save all assumptions as a JSON file. Reload them in any session with the upload (↑) button.',
+      'Use Reset (↺) in the top bar to return all inputs to default values.',
     ],
   },
   {
     heading: 'Input Panel',
     items: [
-      'Business Profile — Core company metrics: annual revenue, invoice/payment volumes, AR headcount, and Days Sales Outstanding.',
+      'Business Profile — Enter a business name (shown in the header, dashboard, and PDF), then core metrics: annual revenue, invoice/payment volumes, AR headcount, and Days Sales Outstanding.',
       'Payment Mix — How the customer currently splits payments across Credit Card, Check, Offline ACH, and Online ACH. Adjust via slider or type a % directly.',
-      'Versapay Impact — Conversion assumptions: what % of checks and ACH go online, portal adoption rates, and efficiency gains.',
-      'Financial Assumptions — Cost of capital, surcharge rate, write-off recovery, software/implementation costs, and other line items.',
+      'Versapay Impact — Conversion assumptions: what % of checks and ACH move online, portal adoption rates, and AR efficiency gains.',
+      'Financial Assumptions — Cost of capital, surcharge rate, write-off recovery, software/implementation costs, and other financial line items.',
     ],
   },
   {
     heading: 'Dashboard Sections',
     items: [
+      'Business Profile & Assumptions — A permanent summary at the top showing all inputs at a glance. Always visible.',
       'ROI Overview — Headline metrics: Annual Benefit, Year 1 ROI, Working Capital Unlocked, and DSO Reduction.',
-      'Business Profile — A read-only summary of inputs and key assumptions at a glance.',
-      'Payment Mix — Current vs. Future payment breakdown as donut charts, plus Payment Transformation stats (% moved online, manual events eliminated, self-service rate).',
-      'Annual Financial Impact — Individual benefit categories as a bar chart. Use the dropdown to exclude any benefits that don\'t apply. Click ⓘ on any row for a plain-English explanation and formula.',
+      'Operational Impact — Process change quantified: manual payment events eliminated, FTE capacity released, % of payments moved online, customer self-service rate, and payment match rate (online vs. offline).',
+      'Payment Mix — Current vs. Future payment breakdown as donut charts, plus Payment Transformation stats.',
+      'Annual Financial Impact — Individual benefit categories as a bar chart. Use the dropdown to exclude any that don\'t apply. Click ⓘ on any row for a plain-English explanation and formula.',
       'Investment Summary — Full cost breakdown (software + implementation) with payback period and net Year 1 benefit alongside the ROI figure.',
     ],
   },
@@ -483,9 +539,11 @@ const HELP_SECTIONS = [
     heading: 'Presentation Mode',
     items: [
       'Click Presentation in the top-right to hide the input panel and show a clean, full-width dashboard.',
+      'Use ← / → arrow keys to navigate between sections. The active section is highlighted and others collapse automatically.',
+      'Hover the floating nav (right edge) to manage sections: click to jump, use ↑/↓ arrows to reorder, or click the eye icon to show/hide individual sections.',
+      'Click any section label directly to collapse or expand it; use "Expand all" in the nav to restore all at once.',
       'Use "Pop out inputs" to open the input panel in a separate window — ideal for a second monitor. Changes sync to the presentation in real time.',
-      'Click any section label to collapse it; use the floating nav on the right to jump between sections or expand all.',
-      'Clicking a section in the nav collapses the others and centers that section with a highlight.',
+      'Click the PDF button (in the nav overlay or top bar) to download a print-ready PDF of the full dashboard.',
     ],
   },
 ];
