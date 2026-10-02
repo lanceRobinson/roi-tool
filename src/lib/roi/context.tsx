@@ -154,6 +154,12 @@ export function RoiProvider({ children, sessionId: propSessionId }: RoiProviderP
   // Keep stateRef current so message handlers always read latest state
   useEffect(() => { stateRef.current = state; });
 
+  // Sync browser tab title with business name
+  useEffect(() => {
+    const name = state.inputs.businessName.trim();
+    document.title = name ? `${name} — Versapay ROI Calculator` : 'Versapay ROI Calculator';
+  }, [state.inputs.businessName]);
+
   // Set up BroadcastChannel
   useEffect(() => {
     if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
