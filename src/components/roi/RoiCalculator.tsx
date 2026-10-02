@@ -352,6 +352,11 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
             return { el, prev };
           });
 
+          // Hide chrome elements (AppBar, nav, input panel) via JS for
+          // the same reason — CSS @media print loses to emotion specificity
+          const hidden = Array.from(document.querySelectorAll<HTMLElement>('[data-no-print]'));
+          hidden.forEach(el => el.style.setProperty('display', 'none', 'important'));
+
           window.print();
 
           const restore = () => {
@@ -361,6 +366,7 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
                 if (prev[i]) el.style.setProperty(p, prev[i]);
               });
             });
+            hidden.forEach(el => el.style.removeProperty('display'));
             setCollapsed(savedCollapsed);
             window.removeEventListener('afterprint', restore);
           };
