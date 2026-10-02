@@ -357,9 +357,11 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
           const hidden = Array.from(document.querySelectorAll<HTMLElement>('[data-no-print]'));
           hidden.forEach(el => el.style.setProperty('display', 'none', 'important'));
 
-          window.print();
-
+          // Guard so restore only runs once whether the user prints or cancels
+          let restored = false;
           const restore = () => {
+            if (restored) return;
+            restored = true;
             saved.forEach(({ el, prev }) => {
               PROPS.forEach(([p], i) => {
                 el.style.removeProperty(p);
@@ -369,8 +371,16 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
             hidden.forEach(el => el.style.removeProperty('display'));
             setCollapsed(savedCollapsed);
             window.removeEventListener('afterprint', restore);
+            mql.removeEventListener('change', onMqlChange);
           };
+
+          // afterprint fires on print; matchMedia fires on cancel — cover both
+          const mql = window.matchMedia('print');
+          const onMqlChange = (e: MediaQueryListEvent) => { if (!e.matches) restore(); };
+          mql.addEventListener('change', onMqlChange);
           window.addEventListener('afterprint', restore);
+
+          window.print();
         }, 350);
       });
     };
