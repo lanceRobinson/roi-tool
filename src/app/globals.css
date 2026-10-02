@@ -26,6 +26,16 @@ body {
 }
 
 @media print {
+  /* Remove page margins so Chrome suppresses its timestamp/URL headers */
+  @page {
+    margin: 0;
+  }
+
+  /* Compensate with content padding */
+  [data-print-scroll] {
+    padding: 24px !important;
+  }
+
   /* ── Hide all chrome ─────────────────────────────────────────── */
   [data-no-print] {
     display: none !important;
