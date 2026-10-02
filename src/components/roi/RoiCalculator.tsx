@@ -510,9 +510,11 @@ function PresentationOverlay({ onPrint }: { onPrint: () => void }) {
 }
 
 function Header({ onPrint }: { onPrint: () => void }) {
-  const { state: { inputPanelOpen, inputs }, dispatch, reset } = useRoi();
+  const { state: { inputPanelOpen, presentationMode, inputs }, dispatch, reset } = useRoi();
   const isMobile = useMediaQuery(useTheme().breakpoints.down('md'), { noSsr: true });
   const [helpOpen, setHelpOpen] = useState(false);
+
+  if (presentationMode) return null;
 
   return (
     <>
