@@ -324,15 +324,48 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
     printRef.current = () => {
       const savedCollapsed = new Set(collapsedRef.current);
       setCollapsed(new Set()); // expand all visible sections
+
       requestAnimationFrame(() => {
         setTimeout(() => {
+          // CSS @media print can't reliably break Chrome's scroll-container
+          // clipping. Set inline styles with !important priority instead —
+          // these always win over class-based styles.
+          const PROPS: Array<[string, string]> = [
+            ['overflow',   'visible'],
+            ['overflow-y', 'visible'],
+            ['overflow-x', 'visible'],
+            ['height',     'auto'],
+            ['max-height', 'none'],
+            ['min-height', '0'],
+            ['display',    'block'],
+            ['flex',       'none'],
+            ['position',   'static'],
+          ];
+
+          const selector = '[data-print-root],[data-print-content],[data-print-outer],[data-print-scroll]';
+          const targets = Array.from(document.querySelectorAll<HTMLElement>(selector));
+
+          // Save existing inline values and apply overrides
+          const saved = targets.map(el => {
+            const prev = PROPS.map(([p]) => el.style.getPropertyValue(p));
+            PROPS.forEach(([p, v]) => el.style.setProperty(p, v, 'important'));
+            return { el, prev };
+          });
+
           window.print();
+
           const restore = () => {
+            saved.forEach(({ el, prev }) => {
+              PROPS.forEach(([p], i) => {
+                el.style.removeProperty(p);
+                if (prev[i]) el.style.setProperty(p, prev[i]);
+              });
+            });
             setCollapsed(savedCollapsed);
             window.removeEventListener('afterprint', restore);
           };
           window.addEventListener('afterprint', restore);
-        }, 350); // wait for MUI Collapse animations
+        }, 350);
       });
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
