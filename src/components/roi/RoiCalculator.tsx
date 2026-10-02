@@ -257,9 +257,13 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
 
   const visibleSectionIds = SECTIONS.map(s => s.id).filter(id => !hiddenSections.has(id));
 
-  // Tracks the intended current section immediately (not scroll-spy lag).
-  // Using a ref avoids stale closure issues in the keyboard handler.
+  // navTargetRef tracks the intended current section for keyboard nav.
+  // suppressNavRef prevents the scroll spy from overwriting it after
+  // programmatic navigation (collapsed sections shift offsetTops, causing
+  // the spy to resolve the wrong section from scrollTop=0).
   const navTargetRef = useRef(SECTIONS[0].id);
+  const suppressNavRef = useRef(false);
+  const suppressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -271,14 +275,19 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
         if (section && section.offsetTop - 72 <= el.scrollTop) current = id;
       }
       setActiveSection(current);
-      navTargetRef.current = current; // keep in sync when user scrolls manually
+      if (!suppressNavRef.current) navTargetRef.current = current;
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
   }, [visibleSectionIds.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scrollTo = (id: string) => {
-    navTargetRef.current = id; // update immediately so rapid keypresses use the correct position
+    navTargetRef.current = id;
+    // Suppress scroll spy updates until the programmatic scroll settles
+    suppressNavRef.current = true;
+    if (suppressTimer.current) clearTimeout(suppressTimer.current);
+    suppressTimer.current = setTimeout(() => { suppressNavRef.current = false; }, 900);
+
     setHiddenSections(prev => { const next = new Set(prev); next.delete(id); return next; });
     setCollapsed(new Set(visibleSectionIds.filter(s => s !== id)));
 
