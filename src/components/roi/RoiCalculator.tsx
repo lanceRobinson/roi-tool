@@ -35,13 +35,15 @@ import RoiHero from './Dashboard/RoiHero';
 import PaymentMixChart from './Dashboard/PaymentMixChart';
 import FinancialImpactChart from './Dashboard/FinancialImpactChart';
 import InvestmentSummary from './Dashboard/InvestmentSummary';
+import OperationalImpact from './Dashboard/OperationalImpact';
 
 const SECTIONS = [
   { id: 'section-overview', label: 'ROI Overview' },
-  { id: 'section-profile', label: 'Business Profile' },
-  { id: 'section-mix',     label: 'Payment Mix' },
-  { id: 'section-impact',  label: 'Financial Impact' },
-  { id: 'section-invest',  label: 'Investment' },
+  { id: 'section-profile',  label: 'Business Profile' },
+  { id: 'section-mix',      label: 'Payment Mix' },
+  { id: 'section-ops',      label: 'Operational Impact' },
+  { id: 'section-impact',   label: 'Financial Impact' },
+  { id: 'section-invest',   label: 'Investment' },
 ];
 
 function SectionLabel({ children, collapsed, onToggle }: { children: string; collapsed: boolean; onToggle: () => void }) {
@@ -227,6 +229,7 @@ const ALL_SECTION_DEFS = [
   { id: 'section-overview', label: 'ROI Overview',       card: <RoiHero />,              pt: 0 },
   { id: 'section-profile',  label: 'Business Profile',   card: <ProfileSummary />,       pt: 1 },
   { id: 'section-mix',      label: 'Payment Mix',        card: <PaymentMixChart />,      pt: 1 },
+  { id: 'section-ops',      label: 'Operational Impact', card: <OperationalImpact />,    pt: 1 },
   { id: 'section-impact',   label: 'Financial Impact',   card: <FinancialImpactChart />, pt: 1 },
   { id: 'section-invest',   label: 'Investment Summary', card: <InvestmentSummary />,    pt: 1 },
 ];
