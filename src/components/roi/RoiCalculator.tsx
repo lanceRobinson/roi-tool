@@ -27,6 +27,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { RoiProvider, useRoi } from '@/lib/roi/context';
 import InputPanel from './InputPanel/InputPanel';
 import ProfileSummary from './Dashboard/ProfileSummary';
@@ -59,7 +60,7 @@ function SectionLabel({ children, collapsed, onToggle }: { children: string; col
         {children}
       </Typography>
       <Box className="section-rule" sx={{ flex: 1, height: 1, bgcolor: 'divider', transition: 'background-color 0.15s' }} />
-      <ExpandMoreIcon sx={{
+      <ExpandMoreIcon data-no-print="true" sx={{
         fontSize: 14, color: 'text.disabled', flexShrink: 0,
         transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
         transition: 'transform 0.2s',
@@ -81,6 +82,7 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hi
 
   return (
     <Box
+      data-no-print="true"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
       sx={{
@@ -229,7 +231,7 @@ const ALL_SECTION_DEFS = [
   { id: 'section-invest',   label: 'Investment Summary', card: <InvestmentSummary />,    pt: 1 },
 ];
 
-function Dashboard() {
+function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> }) {
   const { state: { presentationMode } } = useRoi();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
@@ -315,18 +317,38 @@ function Dashboard() {
     return () => window.removeEventListener('keydown', onKey);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const collapsedRef = useRef(collapsed);
+  collapsedRef.current = collapsed;
+
+  useEffect(() => {
+    printRef.current = () => {
+      const savedCollapsed = new Set(collapsedRef.current);
+      setCollapsed(new Set()); // expand all visible sections
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          window.print();
+          const restore = () => {
+            setCollapsed(savedCollapsed);
+            window.removeEventListener('afterprint', restore);
+          };
+          window.addEventListener('afterprint', restore);
+        }, 350); // wait for MUI Collapse animations
+      });
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const p = { xs: 2, md: presentationMode ? 4 : 3 };
 
   return (
     <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-      <Box ref={scrollRef} sx={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+      <Box ref={scrollRef} data-print-scroll="true" sx={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
         <Box sx={{ p }}>
           <Stack spacing={0}>
 
             {ALL_SECTION_DEFS
               .filter(({ id }) => !hiddenSections.has(id))
               .map(({ id, label, card, pt }, i, arr) => (
-                <Box key={id} id={id} sx={{ pt: i === 0 ? 0 : (presentationMode ? 4 : pt * 3), pb: i === arr.length - 1 ? 4 : 0 }}>
+                <Box key={id} id={id} data-print-section="true" sx={{ pt: i === 0 ? 0 : (presentationMode ? 4 : pt * 3), pb: i === arr.length - 1 ? 4 : 0 }}>
                   <SectionLabel collapsed={isCollapsed(id)} onToggle={() => toggle(id)}>{label}</SectionLabel>
                   <Collapse in={!isCollapsed(id)}>
                     <Box sx={{
@@ -395,7 +417,7 @@ const HELP_SECTIONS = [
   },
 ];
 
-function Header() {
+function Header({ onPrint }: { onPrint: () => void }) {
   const { state: { inputPanelOpen, presentationMode, inputs }, dispatch, reset, sessionId } = useRoi();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
@@ -450,6 +472,11 @@ function Header() {
               </Button>
             </Tooltip>
           )}
+          <Tooltip title="Download PDF">
+            <IconButton size="small" onClick={onPrint} sx={{ color: 'text.secondary' }}>
+              <PictureAsPdfIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
           <Tooltip title={presentationMode ? 'Exit Presentation' : 'Presentation Mode'}>
             <Button
               size="small"
@@ -500,13 +527,14 @@ function Header() {
 function Calculator() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
+  const printRef = useRef<() => void>(() => {});
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'grey.50' }}>
-      <Header />
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+    <Box data-print-root="true" sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'grey.50' }}>
+      <Header onPrint={() => printRef.current()} />
+      <Box data-print-content="true" sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <InputPanel isMobile={isMobile} />
-        <Dashboard />
+        <Dashboard printRef={printRef} />
       </Box>
     </Box>
   );

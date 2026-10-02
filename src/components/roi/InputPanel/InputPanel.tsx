@@ -138,7 +138,7 @@ export default function InputPanel({ isMobile }: Props) {
   }
 
   return (
-    <Box sx={{
+    <Box data-no-print="true" sx={{
       width: inputPanelOpen ? PANEL_WIDTH : 0,
       minWidth: inputPanelOpen ? PANEL_WIDTH : 0,
       flexShrink: 0,

@@ -24,3 +24,47 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  /* Hide all interactive chrome */
+  .MuiAppBar-root,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  /* Override flex/overflow layout so content flows naturally for print */
+  [data-print-root] {
+    height: auto !important;
+    background: white !important;
+  }
+  [data-print-content] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  [data-print-scroll] {
+    overflow: visible !important;
+    height: auto !important;
+    display: block !important;
+    min-width: 0 !important;
+  }
+
+  /* Page break before each section (except the first) */
+  [data-print-section] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  [data-print-section]:not(:first-child) {
+    break-before: page;
+    page-break-before: always;
+    padding-top: 24px !important;
+    margin-top: 0 !important;
+  }
+
+  /* Clean up focus outlines and animated states */
+  * {
+    outline: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+  }
+}
