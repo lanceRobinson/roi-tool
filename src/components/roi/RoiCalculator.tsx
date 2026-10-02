@@ -340,7 +340,7 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
   const p = { xs: 2, md: presentationMode ? 4 : 3 };
 
   return (
-    <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+    <Box data-print-outer="true" sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
       <Box ref={scrollRef} data-print-scroll="true" sx={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
         <Box sx={{ p }}>
           <Stack spacing={0}>
@@ -425,7 +425,7 @@ function Header({ onPrint }: { onPrint: () => void }) {
 
   return (
     <>
-      <AppBar position="static" elevation={0} sx={{ bgcolor: 'white', borderBottom: '1px solid', borderColor: 'divider', color: 'text.primary' }}>
+      <AppBar data-no-print="true" position="static" elevation={0} sx={{ bgcolor: 'white', borderBottom: '1px solid', borderColor: 'divider', color: 'text.primary' }}>
         <Toolbar sx={{ gap: 1 }}>
           {!presentationMode && (
             <Tooltip title={inputPanelOpen ? 'Hide inputs' : 'Show inputs'}>

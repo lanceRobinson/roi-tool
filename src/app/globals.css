@@ -26,30 +26,36 @@ body {
 }
 
 @media print {
-  /* Hide all interactive chrome */
-  .MuiAppBar-root,
+  /* ── Hide all chrome ─────────────────────────────────────────── */
   [data-no-print] {
     display: none !important;
   }
 
-  /* Override flex/overflow layout so content flows naturally for print */
+  /* ── Break the flex/overflow cage so all content flows ──────── */
+  /*
+   * The app layout is: root(100vh flex-col) > content(flex-row overflow-hidden)
+   *   > outer(flex overflow-hidden) > scroll(overflow-y:auto).
+   * Every ancestor that clips must be reset so the browser can
+   * paginate the full document.
+   */
   [data-print-root] {
     height: auto !important;
+    overflow: visible !important;
     background: white !important;
   }
-  [data-print-content] {
-    display: block !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
+  [data-print-content],
+  [data-print-outer],
   [data-print-scroll] {
-    overflow: visible !important;
-    height: auto !important;
     display: block !important;
-    min-width: 0 !important;
+    flex: none !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 
-  /* Page break before each section (except the first) */
+  /* ── Section page breaks ─────────────────────────────────────── */
   [data-print-section] {
     break-inside: avoid;
     page-break-inside: avoid;
@@ -61,7 +67,7 @@ body {
     margin-top: 0 !important;
   }
 
-  /* Clean up focus outlines and animated states */
+  /* ── Clean up decorative states ─────────────────────────────── */
   * {
     outline: none !important;
     box-shadow: none !important;
