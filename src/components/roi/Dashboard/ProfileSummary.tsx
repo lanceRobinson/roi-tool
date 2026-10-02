@@ -30,7 +30,12 @@ export default function ProfileSummary() {
 
   return (
     <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5 }}>
-      <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>Business Profile & Assumptions</Typography>
+      {inputs.businessName && (
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.25 }}>{inputs.businessName}</Typography>
+      )}
+      <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: inputs.businessName ? 'text.secondary' : 'text.primary' }}>
+        Business Profile & Assumptions
+      </Typography>
 
       <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
 

@@ -1,6 +1,8 @@
 import type { RoiInputs } from './types';
 
 export const DEFAULT_INPUTS: RoiInputs = {
+  businessName: '',
+
   // Business Profile — K6:K13
   annualInvoiceValue:     36_000_000,
   monthlyInvoiceVolume:   900,

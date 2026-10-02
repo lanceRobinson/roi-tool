@@ -6,6 +6,9 @@ export interface PaymentMix {
 }
 
 export interface RoiInputs {
+  // Identity
+  businessName: string;
+
   // Business Profile
   annualInvoiceValue: number;
   monthlyInvoiceVolume: number;

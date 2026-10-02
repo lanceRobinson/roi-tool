@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
 import { useRoi } from '@/lib/roi/context';
 import CurrencyInput from '../common/CurrencyInput';
 import NumberInput from '../common/NumberInput';
@@ -10,6 +11,14 @@ export default function BusinessInputs() {
   const { state: { inputs }, setInputs } = useRoi();
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      <TextField
+        label="Business Name"
+        size="small"
+        fullWidth
+        value={inputs.businessName}
+        onChange={e => setInputs({ businessName: e.target.value })}
+        placeholder="e.g. Acme Corporation"
+      />
       <CurrencyInput label="Annual Invoice Value" value={inputs.annualInvoiceValue} onChange={v => setInputs({ annualInvoiceValue: v })} min={1} />
       <NumberInput label="Monthly Invoice Volume" value={inputs.monthlyInvoiceVolume} onChange={v => setInputs({ monthlyInvoiceVolume: v })} min={1} />
       <NumberInput label="Monthly Payment Volume" value={inputs.monthlyPaymentVolume} onChange={v => setInputs({ monthlyPaymentVolume: v })} min={1} />

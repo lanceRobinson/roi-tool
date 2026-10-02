@@ -80,8 +80,8 @@ describe('0% online conversion', () => {
 });
 
 describe('Edge cases', () => {
-  it('zero implementation cost produces 0 ROI (not NaN)', () => {
-    const r = calculateRoi({ ...DEFAULT_INPUTS, implementationCost: 0 });
+  it('zero total investment produces 0 ROI (not NaN)', () => {
+    const r = calculateRoi({ ...DEFAULT_INPUTS, implementationCost: 0, softwareCost: 0 });
     expect(r.roi).toBe(0);
   });
 

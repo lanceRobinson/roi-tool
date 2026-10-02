@@ -56,6 +56,7 @@ type BroadcastPayload = { inputs: RoiInputs; disabledBenefits: (keyof RoiBenefit
 type Action =
   | { type: 'SET_INPUTS'; payload: Partial<RoiInputs> }
   | { type: 'SET_PAYMENT_MIX'; payload: Partial<RoiInputs['paymentMix']> }
+  | { type: 'LOAD_INPUTS'; payload: Partial<RoiInputs> }
   | { type: 'TOGGLE_BENEFIT'; payload: keyof RoiBenefits }
   | { type: 'SET_DISABLED_BENEFITS'; payload: (keyof RoiBenefits)[] }
   | { type: 'SYNC'; payload: BroadcastPayload }
@@ -74,6 +75,19 @@ function reducer(state: RoiState, action: Action): RoiState {
     }
     case 'SET_PAYMENT_MIX': {
       const inputs = { ...state.inputs, paymentMix: { ...state.inputs.paymentMix, ...action.payload } };
+      const rawResults = calculateRoi(inputs);
+      return { ...state, inputs, rawResults, results: maskBenefits(rawResults, state.disabledBenefits) };
+    }
+    case 'LOAD_INPUTS': {
+      // Merge loaded values over current state; missing keys keep their current values
+      const partial = action.payload;
+      const inputs: RoiInputs = {
+        ...state.inputs,
+        ...partial,
+        paymentMix: partial.paymentMix
+          ? { ...state.inputs.paymentMix, ...partial.paymentMix }
+          : state.inputs.paymentMix,
+      };
       const rawResults = calculateRoi(inputs);
       return { ...state, inputs, rawResults, results: maskBenefits(rawResults, state.disabledBenefits) };
     }
@@ -116,6 +130,7 @@ interface RoiContextValue {
   sessionId: string;
   setInputs: (payload: Partial<RoiInputs>) => void;
   setPaymentMix: (payload: Partial<RoiInputs['paymentMix']>) => void;
+  loadInputs: (payload: Partial<RoiInputs>) => void;
   toggleBenefit: (key: keyof RoiBenefits) => void;
   setDisabledBenefits: (keys: (keyof RoiBenefits)[]) => void;
   reset: () => void;
@@ -189,6 +204,7 @@ export function RoiProvider({ children, sessionId: propSessionId }: RoiProviderP
     sessionId: sessionIdRef.current,
     setInputs: (payload) => dispatch({ type: 'SET_INPUTS', payload }),
     setPaymentMix: (payload) => dispatch({ type: 'SET_PAYMENT_MIX', payload }),
+    loadInputs: (payload) => dispatch({ type: 'LOAD_INPUTS', payload }),
     toggleBenefit: (key) => dispatch({ type: 'TOGGLE_BENEFIT', payload: key }),
     setDisabledBenefits: (keys) => dispatch({ type: 'SET_DISABLED_BENEFITS', payload: keys }),
     reset: () => dispatch({ type: 'RESET' }),
