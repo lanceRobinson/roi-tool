@@ -232,7 +232,7 @@ const ALL_SECTION_DEFS = [
 ];
 
 function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> }) {
-  const { state: { presentationMode } } = useRoi();
+  const { state: { presentationMode, inputs } } = useRoi();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -392,6 +392,15 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
     <Box data-print-outer="true" sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
       <Box ref={scrollRef} data-print-scroll="true" sx={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
         <Box sx={{ p }}>
+
+          {/* Dashboard / PDF header */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+            <Box sx={{ width: 6, height: 36, bgcolor: 'primary.main', borderRadius: 1, flexShrink: 0 }} />
+            <Typography sx={{ fontWeight: 800, fontSize: { xs: '1rem', md: '1.25rem' }, letterSpacing: 0.5, color: 'text.primary', lineHeight: 1.2 }}>
+              VERSAPAY ROI{inputs.businessName ? ` — ${inputs.businessName.toUpperCase()}` : ''}
+            </Typography>
+          </Box>
+
           <Stack spacing={0}>
 
             {ALL_SECTION_DEFS
