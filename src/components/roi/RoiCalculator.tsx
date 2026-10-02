@@ -39,7 +39,6 @@ import OperationalImpact from './Dashboard/OperationalImpact';
 
 const SECTIONS = [
   { id: 'section-overview', label: 'ROI Overview' },
-  { id: 'section-profile',  label: 'Business Profile' },
   { id: 'section-mix',      label: 'Payment Mix' },
   { id: 'section-ops',      label: 'Operational Impact' },
   { id: 'section-impact',   label: 'Financial Impact' },
@@ -227,7 +226,6 @@ function DashboardNav({ activeSection, onNavigate, hasCollapsed, onExpandAll, hi
 
 const ALL_SECTION_DEFS = [
   { id: 'section-overview', label: 'ROI Overview',       card: <RoiHero />,              pt: 0 },
-  { id: 'section-profile',  label: 'Business Profile',   card: <ProfileSummary />,       pt: 1 },
   { id: 'section-mix',      label: 'Payment Mix',        card: <PaymentMixChart />,      pt: 1 },
   { id: 'section-ops',      label: 'Operational Impact', card: <OperationalImpact />,    pt: 1 },
   { id: 'section-impact',   label: 'Financial Impact',   card: <FinancialImpactChart />, pt: 1 },
@@ -406,11 +404,16 @@ function Dashboard({ printRef }: { printRef: React.MutableRefObject<() => void> 
         <Box sx={{ p }}>
 
           {/* Dashboard / PDF header */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
             <Box sx={{ width: 6, height: 36, bgcolor: 'primary.main', borderRadius: 1, flexShrink: 0 }} />
             <Typography sx={{ fontWeight: 800, fontSize: { xs: '1rem', md: '1.25rem' }, letterSpacing: 0.5, color: 'text.primary', lineHeight: 1.2 }}>
               VERSAPAY ROI{inputs.businessName ? ` — ${inputs.businessName.toUpperCase()}` : ''}
             </Typography>
+          </Box>
+
+          {/* Business Profile — always visible, not collapsible */}
+          <Box data-print-section="true" sx={{ mb: presentationMode ? 4 : 3 }}>
+            <ProfileSummary />
           </Box>
 
           <Stack spacing={0}>
