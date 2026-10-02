@@ -475,23 +475,54 @@ const HELP_SECTIONS = [
   },
 ];
 
+function PresentationOverlay({ onPrint }: { onPrint: () => void }) {
+  const { state: { presentationMode }, dispatch, sessionId } = useRoi();
+  if (!presentationMode) return null;
+  return (
+    <Box
+      data-no-print="true"
+      sx={{
+        position: 'fixed', top: 16, right: 16, zIndex: 1200,
+        display: 'flex', alignItems: 'center', gap: 0.5,
+        bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider',
+        borderRadius: 2, px: 1, py: 0.5, boxShadow: 2,
+        opacity: 0.15, transition: 'opacity 0.2s',
+        '&:hover': { opacity: 1 },
+      }}
+    >
+      <Tooltip title="Pop out inputs">
+        <IconButton size="small" onClick={() => window.open(`/inputs?session=${sessionId}`, 'roi-inputs', 'width=420,height=760,resizable=yes')}>
+          <OpenInNewIcon sx={{ fontSize: 17 }} />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Download PDF">
+        <IconButton size="small" onClick={onPrint}>
+          <PictureAsPdfIcon sx={{ fontSize: 17 }} />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Exit Presentation">
+        <Button size="small" variant="outlined" startIcon={<FullscreenExitIcon />} onClick={() => dispatch({ type: 'TOGGLE_PRESENTATION' })} sx={{ fontSize: '0.72rem' }}>
+          Exit
+        </Button>
+      </Tooltip>
+    </Box>
+  );
+}
+
 function Header({ onPrint }: { onPrint: () => void }) {
-  const { state: { inputPanelOpen, presentationMode, inputs }, dispatch, reset, sessionId } = useRoi();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
+  const { state: { inputPanelOpen, inputs }, dispatch, reset } = useRoi();
+  const isMobile = useMediaQuery(useTheme().breakpoints.down('md'), { noSsr: true });
   const [helpOpen, setHelpOpen] = useState(false);
 
   return (
     <>
       <AppBar data-no-print="true" position="static" elevation={0} sx={{ bgcolor: 'white', borderBottom: '1px solid', borderColor: 'divider', color: 'text.primary' }}>
         <Toolbar sx={{ gap: 1 }}>
-          {!presentationMode && (
-            <Tooltip title={inputPanelOpen ? 'Hide inputs' : 'Show inputs'}>
-              <IconButton onClick={() => dispatch({ type: 'TOGGLE_PANEL' })} edge="start" size="small">
-                <MenuIcon />
-              </IconButton>
-            </Tooltip>
-          )}
+          <Tooltip title={inputPanelOpen ? 'Hide inputs' : 'Show inputs'}>
+            <IconButton onClick={() => dispatch({ type: 'TOGGLE_PANEL' })} edge="start" size="small">
+              <MenuIcon />
+            </IconButton>
+          </Tooltip>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
             <Box sx={{ width: 8, height: 28, bgcolor: 'primary.main', borderRadius: 1, flexShrink: 0 }} />
             <Box sx={{ minWidth: 0 }}>
@@ -510,40 +541,19 @@ function Header({ onPrint }: { onPrint: () => void }) {
               </IconButton>
             </Tooltip>
           </Box>
-          {!presentationMode && (
-            <Tooltip title="Reset to defaults">
-              <Button size="small" startIcon={<RefreshIcon />} onClick={reset} color="inherit" sx={{ fontSize: '0.75rem', display: { xs: 'none', sm: 'flex' } }}>
-                Reset
-              </Button>
-            </Tooltip>
-          )}
-          {presentationMode && (
-            <Tooltip title="Open inputs on a second screen">
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<OpenInNewIcon />}
-                onClick={() => window.open(`/inputs?session=${sessionId}`, 'roi-inputs', 'width=420,height=760,resizable=yes')}
-                sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}
-              >
-                Pop out inputs
-              </Button>
-            </Tooltip>
-          )}
+          <Tooltip title="Reset to defaults">
+            <Button size="small" startIcon={<RefreshIcon />} onClick={reset} color="inherit" sx={{ fontSize: '0.75rem', display: { xs: 'none', sm: 'flex' } }}>
+              Reset
+            </Button>
+          </Tooltip>
           <Tooltip title="Download PDF">
             <IconButton size="small" onClick={onPrint} sx={{ color: 'text.secondary' }}>
               <PictureAsPdfIcon sx={{ fontSize: 20 }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title={presentationMode ? 'Exit Presentation' : 'Presentation Mode'}>
-            <Button
-              size="small"
-              variant={presentationMode ? 'outlined' : 'contained'}
-              startIcon={presentationMode ? <FullscreenExitIcon /> : <PresentToAllIcon />}
-              onClick={() => dispatch({ type: 'TOGGLE_PRESENTATION' })}
-              sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}
-            >
-              {presentationMode ? 'Exit' : (isMobile ? 'Present' : 'Presentation')}
+          <Tooltip title="Presentation Mode">
+            <Button size="small" variant="contained" startIcon={<PresentToAllIcon />} onClick={() => dispatch({ type: 'TOGGLE_PRESENTATION' })} sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+              {isMobile ? 'Present' : 'Presentation'}
             </Button>
           </Tooltip>
         </Toolbar>
@@ -590,6 +600,7 @@ function Calculator() {
   return (
     <Box data-print-root="true" sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'grey.50' }}>
       <Header onPrint={() => printRef.current()} />
+      <PresentationOverlay onPrint={() => printRef.current()} />
       <Box data-print-content="true" sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <InputPanel isMobile={isMobile} />
         <Dashboard printRef={printRef} />
