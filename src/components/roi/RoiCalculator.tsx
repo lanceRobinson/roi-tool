@@ -396,7 +396,7 @@ const HELP_SECTIONS = [
 ];
 
 function Header() {
-  const { state: { inputPanelOpen, presentationMode }, dispatch, reset, sessionId } = useRoi();
+  const { state: { inputPanelOpen, presentationMode, inputs }, dispatch, reset, sessionId } = useRoi();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
   const [helpOpen, setHelpOpen] = useState(false);
@@ -412,11 +412,18 @@ function Header() {
               </IconButton>
             </Tooltip>
           )}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
             <Box sx={{ width: 8, height: 28, bgcolor: 'primary.main', borderRadius: 1, flexShrink: 0 }} />
-            <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: -0.5, fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
-              VERSAPAY ROI CALCULATOR
-            </Typography>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: -0.5, fontSize: { xs: '0.95rem', md: '1.1rem' }, lineHeight: inputs.businessName ? 1.1 : undefined }}>
+                VERSAPAY ROI CALCULATOR
+              </Typography>
+              {inputs.businessName && (
+                <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {inputs.businessName}
+                </Typography>
+              )}
+            </Box>
             <Tooltip title="How to use this tool">
               <IconButton size="small" onClick={() => setHelpOpen(true)} sx={{ color: 'text.disabled', '&:hover': { color: 'text.secondary' } }}>
                 <InfoOutlinedIcon sx={{ fontSize: 18 }} />
